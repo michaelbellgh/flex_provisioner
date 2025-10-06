@@ -96,13 +96,18 @@ def main():
     args = parser.parse_args()
     if args.config_name == "fortigate":
         configurations = get_fortiflex_configurations(token['access_token'], program_serial)
+        #Lets get our configuration named from our 'fortigate' YAML file
         selected_configuration = [x["id"] for x in configurations["configs"] if x["name"] == config['fortigate']['configuration']]
         if selected_configuration:
             selected_configuration = selected_configuration[0]
+        #Lets get our first stopped or pending asset.
         first_available_asset = get_first_stopped_or_inactive_entitlement(token['access_token'], program_serial, selected_configuration)
         if first_available_asset:
+            #We found a stopped or pending asset, lets regenerate its token and use it
             updated_entitlement = regenerate_or_reactivate_fortiflex_entitlement(token['access_token'], program_serial, first_available_asset)
             print(updated_entitlement["entitlements"][0]['token'])
+            if CLIPBOARD_SUPPORT:
+                pyperclip.copy(updated_entitlement["token"])
         else:
             #No Assets - lets make a new one
             asset = create_fortiflex_entitlement(token['access_token'], program_serial, selected_configuration, count=1, description="Provisioned by Flex Provisioner")
