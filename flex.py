@@ -84,23 +84,6 @@ def create_fortiflex_entitlement(oauth_token: str, program_serial: str, config_i
         return response["entitlements"][0]
     return response
 
-token = get_oauth_token(credentials.api_username, credentials.api_token, client_id="flexvm")
-config = get_configuration_mappings()
-program_serial = config['general']['flex_serial']
-configurations = get_fortiflex_configurations(token['access_token'], program_serial)
-selected_configuration = [x["id"] for x in configurations["configs"] if x["name"] == config['fortigate']['configuration']]
-if selected_configuration:
-    selected_configuration = selected_configuration[0]
-
-entitlements = get_fortiflex_entitlements(token['access_token'], program_serial, selected_configuration)
-first_available_asset = get_first_stopped_or_inactive_entitlement(token['access_token'], program_serial, selected_configuration)
-if first_available_asset:
-    updated_entitlement = regenerate_or_reactivate_fortiflex_entitlement(token['access_token'], program_serial, first_available_asset)
-else:
-    #No Assets - lets make a new one
-    asset = create_fortiflex_entitlement(token['access_token'], program_serial, selected_configuration, count=1, description="Provisioned by Flex Provisioner")
-    print(asset["token"])
-
 
 def main():
     token = get_oauth_token(credentials.api_username, credentials.api_token, client_id="flexvm")
