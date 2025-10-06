@@ -215,4 +215,5 @@ __marimo__/
 # Streamlit
 
 credentials.py
+config.yaml
 .streamlit/secrets.toml
