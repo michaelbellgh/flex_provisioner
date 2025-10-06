@@ -1,0 +1,4 @@
+fortigate:
+  configuration: "My-FortiGate-Template-Flex-Config-Name"
+general: 
+  flex_serial: "Flex-Program-Serial-Number"
