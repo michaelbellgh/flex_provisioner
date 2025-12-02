@@ -91,13 +91,13 @@ def main():
     program_serial = config['general']['flex_serial']
 
     parser = argparse.ArgumentParser(description="Flex Provisioner Script")
-    parser.add_argument("config_name", choices=["fortigate", "fmg"], help="Name of the configuration to use")
+    parser.add_argument("config_name", choices=["fortigate"], help="Name of the configuration to use")
     
     args = parser.parse_args()
-    if args.config_name in ("fortigate", "fmg"):
+    if args.config_name == "fortigate":
         configurations = get_fortiflex_configurations(token['access_token'], program_serial)
-        #Lets get our configuration named from our YAML file
-        selected_configuration = [x["id"] for x in configurations["configs"] if x["name"] == config[args.config_name]['configuration']]
+        #Lets get our configuration named from our 'fortigate' YAML file
+        selected_configuration = [x["id"] for x in configurations["configs"] if x["name"] == config['fortigate']['configuration']]
         if selected_configuration:
             selected_configuration = selected_configuration[0]
         #Lets get our first stopped or pending asset.
@@ -111,9 +111,15 @@ def main():
         else:
             #No Assets - lets make a new one
             asset = create_fortiflex_entitlement(token['access_token'], program_serial, selected_configuration, count=1, description="Provisioned by Flex Provisioner")
-            print(asset["token"])
-            if CLIPBOARD_SUPPORT:
-                pyperclip.copy(asset["token"])
+            if asset and len(asset) == 1:
+                print ("Created new asset:" + asset["token"])
+                if CLIPBOARD_SUPPORT:
+                    pyperclip.copy(asset["token"])
+            elif asset and len(asset) > 1:
+                print(asset["entitlements"][0]["token"])
+                if CLIPBOARD_SUPPORT:
+                    pyperclip.copy(asset["entitlements"][0]["token"])
+
     
 
 
