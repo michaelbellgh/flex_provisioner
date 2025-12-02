@@ -3,7 +3,7 @@
 A Python tool for creating Fortinet FortiFlex VM entitlements. 
 ## Overview
 
-Flex Provisioner will deploy new Flex assets based on the configuration.yaml file.
+Flex Provisioner will deploy new FortiFlex assets based on the configuration.yaml file.
 Use this to just-in-time generate new Flex vm-license codes
 
 ## Prerequisites
@@ -61,8 +61,6 @@ Run the provisioner with the desired configuration:
 ```bash
 python flex_provisioner.py fortigate
 ```
-
-## How It Works
 
 ### Entitlement States
 
