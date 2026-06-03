@@ -41,6 +41,15 @@ def get_fortiflex_entitlements(oauth_token: str, program_serial: str, config_id:
     response = requests.post(f"{base_url}entitlements/list", headers={"Authorization": f"Bearer {oauth_token}"}, json=body).json()
     return response
 
+def get_fortiflex_entitlement_points(oauth_token: str, config_id: int, start_date: str | None = None, end_date: str | None = None) -> dict:
+    body: dict = {"configId": config_id}
+    if start_date:
+        body["startDate"] = start_date
+    if end_date:
+        body["endDate"] = end_date
+    response = requests.post(f"{base_url}entitlements/points", headers={"Authorization": f"Bearer {oauth_token}"}, json=body).json()
+    return response
+
 
 def get_first_stopped_or_inactive_entitlement(oauth_token: str, program_serial: str, config_id: str) -> dict:
     entitlements = get_fortiflex_entitlements(oauth_token, program_serial, config_id)
@@ -91,35 +100,39 @@ def main():
     program_serial = config['general']['flex_serial']
 
     parser = argparse.ArgumentParser(description="Flex Provisioner Script")
-    parser.add_argument("config_name", choices=["fortigate"], help="Name of the configuration to use")
+    parser.add_argument("config_name", choices=["fortigate", "fortiweb"], help="Name of the configuration to use")
     
     args = parser.parse_args()
     if args.config_name == "fortigate":
         configurations = get_fortiflex_configurations(token['access_token'], program_serial)
-        #Lets get our configuration named from our 'fortigate' YAML file
         selected_configuration = [x["id"] for x in configurations["configs"] if x["name"] == config['fortigate']['configuration']]
         if selected_configuration:
             selected_configuration = selected_configuration[0]
-        #Lets get our first stopped or pending asset.
         first_available_asset = get_first_stopped_or_inactive_entitlement(token['access_token'], program_serial, selected_configuration)
         if first_available_asset:
-            #We found a stopped or pending asset, lets regenerate its token and use it
             updated_entitlement = regenerate_or_reactivate_fortiflex_entitlement(token['access_token'], program_serial, first_available_asset)
             print(updated_entitlement["entitlements"][0]['token'])
-            if CLIPBOARD_SUPPORT:
-                pyperclip.copy(updated_entitlement["entitlements"][0]['token'])
         else:
             #No Assets - lets make a new one
             asset = create_fortiflex_entitlement(token['access_token'], program_serial, selected_configuration, count=1, description="Provisioned by Flex Provisioner")
-            if asset and len(asset) == 1:
-                print ("Created new asset:" + asset["token"])
-                if CLIPBOARD_SUPPORT:
-                    pyperclip.copy(asset["token"])
-            elif asset and len(asset) > 1:
-                print(asset["entitlements"][0]["token"])
-                if CLIPBOARD_SUPPORT:
-                    pyperclip.copy(asset["entitlements"][0]["token"])
-
+            print(asset["token"])
+            if CLIPBOARD_SUPPORT:
+                pyperclip.copy(asset["token"])
+    elif args.config_name == "fortiweb":
+        configurations = get_fortiflex_configurations(token['access_token'], program_serial)
+        selected_configuration = [x["id"] for x in configurations["configs"] if x["name"] == config['fortiweb']['configuration']]
+        if selected_configuration:
+            selected_configuration = selected_configuration[0]
+        first_available_asset = get_first_stopped_or_inactive_entitlement(token['access_token'], program_serial, selected_configuration)
+        if first_available_asset:
+            updated_entitlement = regenerate_or_reactivate_fortiflex_entitlement(token['access_token'], program_serial, first_available_asset)
+            print(updated_entitlement["entitlements"][0]['token'])
+        else:
+            #No Assets - lets make a new one
+            asset = create_fortiflex_entitlement(token['access_token'], program_serial, selected_configuration, count=1, description="Provisioned by Flex Provisioner")
+            print(asset["token"])
+            if CLIPBOARD_SUPPORT:
+                pyperclip.copy(asset["token"])
     
 
 
